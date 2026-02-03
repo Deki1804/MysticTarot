@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Minimal Ad Services config to resolve manifest merger conflict with play-services-measurement-api / play-services-ads -->
+<adservices-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <api name="topics" allowAllToAccess="true" />
+</adservices-config>

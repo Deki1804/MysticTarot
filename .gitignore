@@ -1,0 +1,32 @@
+# Gradle files
+.gradle/
+build/
+
+# IntelliJ IDEA files
+.idea/
+*.iml
+*.iws
+
+# Android Studio files
+captures/
+output.json
+
+# Local configuration file (SDK path, etc)
+local.properties
+
+# Keystore files (CRITICAL: DO NOT COMMIT PRIVATE KEYS)
+*.jks
+*.keystore
+keystore.properties
+
+# Log files
+*.log
+build_error.txt
+build_log*.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Kotlin
+.kotlin/

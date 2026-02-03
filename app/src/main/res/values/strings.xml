@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MysticTarot</string>
+    <!-- Replace this with your Web Client ID from Firebase Console -> Authentication -> Google -> Web SDK config -->
+    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID_HERE</string>
+</resources>
