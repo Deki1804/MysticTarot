@@ -64,7 +64,7 @@ fun WelcomeScreen(
             // App Logo/Title Placeholders
             Icon(
                 imageVector = Icons.Default.Person, // Placeholder for App Icon
-                contentDescription = null,
+                contentDescription = "Logo aplikacije",
                 modifier = Modifier.size(120.dp),
                 tint = StarlightGold
             )
@@ -72,7 +72,7 @@ fun WelcomeScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "Welcome to\nPocket Tarot AI",
+                text = "Welcome to\nMystic Tarot AI",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,

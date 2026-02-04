@@ -1,6 +1,7 @@
 package com.mystic.tarot.feature.reading
 
-import android.util.Log
+import android.annotation.SuppressLint
+import com.mystic.tarot.core.util.LogUtil
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.MonetizationOn
 import com.mystic.tarot.core.ads.AdManager
 
+@SuppressLint("ContextCastToActivity")
 @Composable
 fun ReadingScreen(
     journalRepository: JournalRepository,
@@ -54,19 +56,25 @@ fun ReadingScreen(
     val canDoReading by coinRepository.canDoReading.collectAsState(initial = true)
 
     val scrollState = rememberScrollState()
+    
+    // Only scroll if we have a reading text or limit reached
+    val isScrollable = readingText != null || !canDoReading
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            modifier = Modifier.verticalScroll(scrollState)
+            verticalArrangement = if (isScrollable) Arrangement.spacedBy(16.dp) else Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxSize()
+                .then(if (isScrollable) Modifier.verticalScroll(scrollState) else Modifier)
+                .padding(bottom = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
             Text(
                 text = "Daily Guidance",
@@ -76,13 +84,19 @@ fun ReadingScreen(
             )
 
             // Card Interaction Area
-            // Card Interaction Area
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = if (isScrollable) {
+                    Modifier.fillMaxWidth()
+                } else {
+                    Modifier.weight(1f).fillMaxWidth()
+                }
             ) {
                 if (!canDoReading && !isCardFlipped && readingText == null && !isLoading) {
                     // LIMIT REACHED STATE
+                    LaunchedEffect(Unit) {
+                        analyticsHelper.logEvent(AnalyticsHelper.EVENT_READING_BLOCKED)
+                    }
                      Card(
                         colors = CardDefaults.cardColors(containerColor = StarlightGold.copy(alpha = 0.1f)),
                         modifier = Modifier.padding(16.dp).fillMaxWidth()
@@ -104,7 +118,6 @@ fun ReadingScreen(
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(24.dp))
-                            Spacer(modifier = Modifier.height(24.dp))
                             
                             val activity = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
                             
@@ -114,14 +127,13 @@ fun ReadingScreen(
                                         adManager.showRewardedAd(activity) {
                                             scope.launch {
                                                 coinRepository.addBonusReading()
-                                                // Automatic refresh relies on flow collection
+                                                analyticsHelper.logEvent(AnalyticsHelper.EVENT_AD_WATCHED)
                                             }
                                         }
                                     }
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = StarlightGold)
                             ) {
-                                androidx.compose.material.icons.Icons.Default.PlayArrow
                                 Icon(
                                     imageVector = androidx.compose.material.icons.Icons.Default.PlayArrow,
                                     contentDescription = "Watch Ad",
@@ -162,7 +174,8 @@ fun ReadingScreen(
                     // Initial State (Card Back / Draw Button)
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         // Question Input
                         var questionText by remember { mutableStateOf("") }
@@ -177,58 +190,57 @@ fun ReadingScreen(
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White
                             ),
-                            modifier = Modifier.fillMaxWidth()
+                            placeholder = { Text("O čemu razmišljaš?", color = Color.Gray.copy(alpha = 0.5f)) },
+                            modifier = Modifier.fillMaxWidth().heightIn(max = 120.dp)
                         )
 
                         Box(
-                            modifier = Modifier
-                                .height(500.dp)
-                                .fillMaxWidth(),
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
-                            // Card Back styling
-                            // Shimmer Animation
-                            val shimmerColors = listOf(
-                                StarlightGold.copy(alpha = 0.1f),
-                                StarlightGold.copy(alpha = 0.5f),
-                                StarlightGold.copy(alpha = 0.1f),
-                            )
-                            val transition = rememberInfiniteTransition(label = "shimmer")
-                            val translateAnim = transition.animateFloat(
-                                initialValue = 0f,
-                                targetValue = 1000f,
-                                animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-                                    animation = tween(durationMillis = 1500, easing = androidx.compose.animation.core.LinearEasing),
-                                    repeatMode = androidx.compose.animation.core.RepeatMode.Restart
-                                ),
-                                label = "shimmerTranslate"
-                            )
-                            val brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                                colors = shimmerColors,
-                                start = androidx.compose.ui.geometry.Offset.Zero,
-                                end = androidx.compose.ui.geometry.Offset(x = translateAnim.value, y = translateAnim.value)
-                            )
-
-                            // Card Back styling
-                            Card(
+                            // Card Back styling with Aspect Ratio
+                             Card(
                                 modifier = Modifier
-                                    .width(300.dp)
-                                    .fillMaxHeight(),
-                                colors = CardDefaults.cardColors(containerColor = Color.Transparent), // Transparent to show background
+                                    .fillMaxHeight()
+                                    .aspectRatio(2/3f)
+                                    .padding(vertical = 16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                                 border = androidx.compose.foundation.BorderStroke(2.dp, StarlightGold)
                             ) {
+                                // Shimmer Animation
+                                val shimmerColors = listOf(
+                                    StarlightGold.copy(alpha = 0.1f),
+                                    StarlightGold.copy(alpha = 0.5f),
+                                    StarlightGold.copy(alpha = 0.1f),
+                                )
+                                val transition = rememberInfiniteTransition(label = "shimmer")
+                                val translateAnim = transition.animateFloat(
+                                    initialValue = 0f,
+                                    targetValue = 1000f,
+                                    animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                                        animation = tween(durationMillis = 1500, easing = androidx.compose.animation.core.LinearEasing),
+                                        repeatMode = androidx.compose.animation.core.RepeatMode.Restart
+                                    ),
+                                    label = "shimmerTranslate"
+                                )
+                                val brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                                    colors = shimmerColors,
+                                    start = androidx.compose.ui.geometry.Offset.Zero,
+                                    end = androidx.compose.ui.geometry.Offset(x = translateAnim.value, y = translateAnim.value)
+                                )
+
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .background(
                                             brush = androidx.compose.ui.graphics.Brush.verticalGradient(
                                                 colors = listOf(
-                                                    Color(0xFF2D1658), // Deep Cosmic Purple
-                                                    Color(0xFF1A1A2E)  // Dark Blue/Black
+                                                    Color(0xFF2D1658),
+                                                    Color(0xFF1A1A2E)
                                                 )
                                             )
                                         )
-                                        .background(brush), // Shimmer overlay
+                                        .background(brush),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
@@ -238,60 +250,49 @@ fun ReadingScreen(
                                     )
                                 }
                             }
-                            
-                             val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
-                            Button(
-                                onClick = {
-                                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                    if (!isLoading) {
-                                        isLoading = true
-                                        scope.launch {
-                                            // 1. Draw a random card
-                                            val randomCard = TarotDeck.majorArcana.random()
-                                            currentCardName = randomCard.name
-                                            currentCardUrl = randomCard.imageUrl
-                                            val q = questionText.ifBlank { null }
-                                            currentQuestion = q
-                                            
-                                            // 2. Get AI Reading
-                                            val aiResponse = aiService.getReading(randomCard, q)
-                                            
-                                            // 3. Reveal
-                                            readingText = aiResponse
-                                            isLoading = false
-                                            isCardFlipped = true
-                                            
-                                            // 4. Save & Track
-                                            // Enforce limit FIRST (Local)
-                                            coinRepository.markReadingDone()
-                                            
-                                            val reading = Reading(
-                                                userId = userId,
-                                                question = q ?: "",
-                                                cardIds = emptyList(), // TODO: Map real IDs if we had them
-                                                interpretation = aiResponse,
-                                                type = "daily" // Default for now
-                                            )
-                                            
-                                            // Then save to Cloud (Best effort)
-                                            journalRepository.saveReading(reading)
-                                            analyticsHelper.logEvent(AnalyticsHelper.EVENT_READING_COMPLETED)
-                                            analyticsHelper.logEvent(AnalyticsHelper.EVENT_DAILY_CARD_DRAWN)
-                                        }
+                        }
+                        
+                        val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+                        Button(
+                            onClick = {
+                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                if (!isLoading) {
+                                    isLoading = true
+                                    analyticsHelper.logEvent(AnalyticsHelper.EVENT_READING_STARTED)
+                                    scope.launch {
+                                        val randomCard = TarotDeck.majorArcana.random()
+                                        currentCardName = randomCard.name
+                                        currentCardUrl = randomCard.imageUrl
+                                        val q = questionText.ifBlank { null }
+                                        currentQuestion = q
+                                        
+                                        val aiResponse = aiService.getReading(randomCard, q)
+                                        
+                                        readingText = aiResponse
+                                        isLoading = false
+                                        isCardFlipped = true
+                                        coinRepository.markReadingDone()
+                                        
+                                        journalRepository.saveReading(Reading(
+                                            userId = userId,
+                                            question = q ?: "",
+                                            cardIds = emptyList(),
+                                            interpretation = aiResponse,
+                                            type = "daily"
+                                        ))
+                                        analyticsHelper.logEvent(AnalyticsHelper.EVENT_READING_COMPLETED)
+                                        analyticsHelper.logEvent(AnalyticsHelper.EVENT_DAILY_CARD_DRAWN)
                                     }
-                                },
-                                modifier = Modifier
-                                    .height(56.dp)
-                                    .align(Alignment.BottomCenter)
-                                    .offset(y = (-32).dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = StarlightGold)
-                            ) {
-                                Text("Izvuci Kartu", color = Color.Black)
-                            }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = StarlightGold)
+                        ) {
+                            Text("Izvuci Kartu", color = Color.Black, fontWeight = FontWeight.Bold)
                         }
                     }
                 } else if (isLoading) {
-                     Box(modifier = Modifier.height(500.dp), contentAlignment = Alignment.Center) {
+                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                          Column(horizontalAlignment = Alignment.CenterHorizontally) {
                              CircularProgressIndicator(color = StarlightGold)
                              Text(
@@ -331,21 +332,16 @@ fun ReadingScreen(
                                 model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
                                     .data(currentCardUrl)
                                     .crossfade(true)
-                                    .setHeader("User-Agent", "MysticTarot/1.0 (Android)") // Fix for Wikimedia 403
-                                    .listener(
-                                        onStart = { Log.d("Coil", "Start loading: $currentCardUrl") },
-                                        onSuccess = { _, _ -> Log.d("Coil", "Success loading: $currentCardUrl") },
-                                        onError = { request, result -> Log.e("Coil", "Error loading: $currentCardUrl", result.throwable) }
-                                    )
+                                    .setHeader("User-Agent", "MysticTarot/1.0 (Android)")
                                     .build(),
                                 contentDescription = currentCardName,
                                 modifier = Modifier
-                                    .height(450.dp)
-                                    .width(300.dp)
+                                    .height(380.dp) // Slightly smaller in result view too
+                                    .aspectRatio(2/3f)
                                     .padding(bottom = 16.dp),
                                 contentScale = androidx.compose.ui.layout.ContentScale.Fit,
-                                placeholder = androidx.compose.ui.res.painterResource(com.mystic.tarot.R.drawable.ic_mystic_icon), // Fallback to icon for now if no placeholder
-                                error = androidx.compose.ui.res.painterResource(com.mystic.tarot.R.drawable.ic_mystic_icon) // Show something on error
+                                placeholder = androidx.compose.ui.res.painterResource(com.mystic.tarot.R.drawable.ic_mystic_icon),
+                                error = androidx.compose.ui.res.painterResource(com.mystic.tarot.R.drawable.ic_mystic_icon)
                             )
                         }
 
@@ -361,6 +357,16 @@ fun ReadingScreen(
                                 lineHeight = 24.sp
                             )
                         }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(
+                            text = "Napomena: Ovo čitanje je generirano pomoću AI i služi isključivo u svrhe zabave i samorefleksije. Nije zamjena za stručni savjet.",
+                            color = Color.White.copy(alpha = 0.5f),
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
                         
                         Spacer(modifier = Modifier.height(24.dp))
                         

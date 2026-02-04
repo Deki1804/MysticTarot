@@ -52,7 +52,8 @@ fun AppNavigation(
     analyticsHelper: com.mystic.tarot.core.analytics.AnalyticsHelper,
     userId: String,
     coinRepository: com.mystic.tarot.core.data.CoinRepository,
-    settingsRepository: com.mystic.tarot.core.data.SettingsRepository
+    settingsRepository: com.mystic.tarot.core.data.SettingsRepository,
+    authViewModel: com.mystic.tarot.core.auth.AuthViewModel
 ) {
     val navController = rememberNavController()
 
@@ -91,7 +92,7 @@ fun AppNavigation(
                     route = Screen.Home.route,
                     enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) + fadeIn(animationSpec = tween(500)) },
                     exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }) + fadeOut(animationSpec = tween(500)) }
-                ) { HomeScreen(navController = navController, coinRepository = coinRepository) }
+                ) { HomeScreen(navController = navController, coinRepository = coinRepository, analyticsHelper = analyticsHelper) }
                 
                 composable(
                     route = Screen.Reading.route,
@@ -128,8 +129,8 @@ fun AppNavigation(
 
                 composable(route = "settings") {
                      SettingsScreen(
-                        settingsRepository = settingsRepository,
-                        onBackClick = { navController.popBackStack() }
+                        navController = navController,
+                        authViewModel = authViewModel
                      )
                 }
             }

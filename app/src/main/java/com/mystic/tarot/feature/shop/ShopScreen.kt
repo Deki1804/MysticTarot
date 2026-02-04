@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,7 +96,7 @@ fun ShopScreen(
             },
             colors = ButtonDefaults.buttonColors(containerColor = StarlightGold)
         ) {
-             Icon(Icons.Default.PlayArrow, contentDescription = null)
+             Icon(Icons.Default.PlayArrow, contentDescription = "Gledaj reklamu")
              Spacer(modifier = Modifier.width(8.dp))
              Text("Gledaj Reklamu (+50 🪙)", color = Color.Black, fontWeight = FontWeight.Bold)
         }
@@ -111,34 +112,62 @@ fun ShopScreen(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Items List (Hardcoded for now)
+        // Items List
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             item {
                 ShopItem(
-                    name = "Premium Pozadina",
-                    description = "Otključaj ekskluzivnu 'Zlatna Zora' pozadinu.",
-                    price = 500,
-                    onBuy = { viewModel.buyItem(500, onSuccess = {}, onError = {}) }
+                    name = "Dodatno Čitanje",
+                    description = "Iskoristi zlatnike za još jedno instant čitanje sudbine.",
+                    price = 50,
+                    onBuy = { 
+                        viewModel.buyItem(50, 
+                            onSuccess = {
+                                viewModel.addBonusReading()
+                                android.widget.Toast.makeText(context, "Kupljeno! Novo čitanje dostupno.", android.widget.Toast.LENGTH_SHORT).show()
+                            }, 
+                            onError = {
+                                android.widget.Toast.makeText(context, "Nemaš dovoljno zlatnika!", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        ) 
+                    }
                 )
             }
+            
             item {
-                ShopItem(
-                    name = "Rider-Waite Deluxe",
-                    description = "Visokokvalitetne slike originalnog špila.",
-                    price = 1000,
-                    onBuy = { viewModel.buyItem(1000, onSuccess = {}, onError = {}) }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Dolazi Uskoro...",
+                    fontSize = 18.sp,
+                    color = Color.White.copy(alpha = 0.4f),
+                    fontWeight = FontWeight.Bold
                 )
             }
+
             item {
-                ShopItem(
-                    name = "Dnevnik Snova",
-                    description = "Zapisuj svoje snove i tumači ih uz AI.",
-                    price = 200,
-                    onBuy = { viewModel.buyItem(200, onSuccess = {}, onError = {}) }
-                )
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f)),
+                    modifier = Modifier.fillMaxWidth().alpha(0.5f)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("✨ Novi Špilovi Karata", color = Color.White)
+                        Text("Otključaj unikatne ilustracije i nove energije.", fontSize = 12.sp, color = Color.Gray)
+                    }
+                }
+            }
+
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f)),
+                    modifier = Modifier.fillMaxWidth().alpha(0.5f)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("🚫 Bez Reklama", color = Color.White)
+                        Text("Čisto iskustvo bez prekida.", fontSize = 12.sp, color = Color.Gray)
+                    }
+                }
             }
         }
     }

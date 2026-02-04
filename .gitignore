@@ -19,6 +19,9 @@ local.properties
 *.keystore
 keystore.properties
 
+# Firebase
+app/google-services.json
+
 # Log files
 *.log
 build_error.txt
@@ -30,3 +33,8 @@ Thumbs.db
 
 # Kotlin
 .kotlin/
+
+# Releases and Binaries
+app/release/
+*.aab
+*.apk

@@ -29,5 +29,7 @@ class AnalyticsHelper(context: Context) {
         const val EVENT_READING_COMPLETED = "reading_completed"
         const val EVENT_JOURNAL_OPENED = "journal_opened"
         const val EVENT_AD_WATCHED = "ad_watched_reward"
+        const val EVENT_READING_STARTED = "reading_started"
+        const val EVENT_READING_BLOCKED = "reading_blocked"
     }
 }

@@ -79,7 +79,8 @@ class MainActivity : ComponentActivity() {
                         analyticsHelper = analyticsHelper,
                         userId = user!!.uid,
                         coinRepository = coinRepository,
-                        settingsRepository = settingsRepository
+                        settingsRepository = settingsRepository,
+                        authViewModel = authViewModel
                     )
                 } else {
                     WelcomeScreen(

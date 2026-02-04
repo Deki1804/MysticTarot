@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,6 +26,7 @@ fun JournalScreen(
     viewModel: JournalViewModel
 ) {
     val readings by viewModel.readings.collectAsState()
+    var selectedReading by remember { mutableStateOf<Reading?>(null) }
 
     Column(
         modifier = Modifier
@@ -56,21 +59,74 @@ fun JournalScreen(
                 modifier = Modifier.weight(1f)
             ) {
                 items(readings) { reading ->
-                    ReadingItem(reading)
+                    ReadingItem(reading, onClick = { selectedReading = reading })
                 }
             }
         }
     }
+
+    // Detail Dialog
+    selectedReading?.let { reading ->
+        val formatter = SimpleDateFormat("dd. MMM yyyy., HH:mm", Locale.getDefault())
+        val dateString = reading.date.toDate().let { formatter.format(it) }
+
+        AlertDialog(
+            onDismissRequest = { selectedReading = null },
+            title = {
+                Column {
+                    Text(
+                        text = if (reading.type == "daily") "Dnevno Čitanje" else "Pitanje Duhovima",
+                        fontSize = 20.sp,
+                        color = StarlightGold,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = dateString,
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
+            },
+            text = {
+                val scrollState = rememberScrollState()
+                Column(modifier = Modifier.verticalScroll(scrollState)) {
+                    if (reading.question.isNotEmpty()) {
+                        Text(
+                            text = "\"${reading.question}\"",
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
+                    Text(
+                        text = reading.interpretation,
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 16.sp,
+                        lineHeight = 24.sp
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedReading = null }) {
+                    Text("Zatvori", color = StarlightGold)
+                }
+            },
+            containerColor = Color(0xFF1A1A2E), // Dark theme matching app
+            textContentColor = Color.White
+        )
+    }
 }
 
 @Composable
-fun ReadingItem(reading: Reading) {
+fun ReadingItem(reading: Reading, onClick: () -> Unit) {
     val formatter = SimpleDateFormat("dd. MMM yyyy., HH:mm", Locale.getDefault())
     val dateString = reading.date.toDate().let { formatter.format(it) }
 
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f)),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -104,9 +160,18 @@ fun ReadingItem(reading: Reading) {
             }
             
             Text(
-                text = reading.interpretation.take(100) + "...",
+                text = reading.interpretation.take(150) + "...",
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 14.sp
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Text(
+                text = "✨ Vrati se i pročitaj ponovno kasnije za nove uvide.",
+                color = StarlightGold.copy(alpha = 0.6f),
+                fontSize = 11.sp,
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
             )
         }
     }

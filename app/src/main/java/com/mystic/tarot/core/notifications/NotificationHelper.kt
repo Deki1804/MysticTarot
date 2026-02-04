@@ -27,15 +27,28 @@ object NotificationHelper {
     }
 
     fun scheduleDailyReminder(context: Context) {
-        // Schedule for approx 10:00 AM if possible, or just periodically every 24h starting now
-        // For simplicity in this V1, we just do every 24 hours from "now" (which is when app opens)
-        
+        val now = Calendar.getInstance()
+        val target = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 8)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        // If 8 AM has already passed today, schedule for tomorrow
+        if (target.before(now)) {
+            target.add(Calendar.DAY_OF_MONTH, 1)
+        }
+
+        val initialDelay = target.timeInMillis - now.timeInMillis
+
         val dailyWorkRequest = PeriodicWorkRequestBuilder<DailyReminderWorker>(24, TimeUnit.HOURS)
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
             .build()
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             "daily_reminder_work",
-            ExistingPeriodicWorkPolicy.KEEP, // Keep existing if already scheduled
+            ExistingPeriodicWorkPolicy.UPDATE, // UPDATE to overwrite any old "spammy" logic
             dailyWorkRequest
         )
     }

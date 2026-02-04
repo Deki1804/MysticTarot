@@ -79,4 +79,45 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
     fun clearError() {
         _error.value = null
     }
+
+    fun onLinkGoogleAccountResult(task: com.google.android.gms.tasks.Task<com.google.android.gms.auth.api.signin.GoogleSignInAccount>) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
+                val idToken = account.idToken
+                if (idToken != null) {
+                    val result = repository.linkWithGoogle(idToken)
+                    result.onSuccess {
+                        // User is now linked
+                    }.onFailure { e ->
+                        _error.value = "Link Failed: ${e.message}"
+                    }
+                } else {
+                    _error.value = "Link Failed: No ID Token"
+                }
+            } catch (e: com.google.android.gms.common.api.ApiException) {
+                _error.value = "Link Sign In Failed: ${e.statusCode}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun deleteAccount() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = repository.deleteAccount()
+            result.onSuccess {
+                // Account deleted, user logic will likely trigger authState change to null
+            }.onFailure { e ->
+                _error.value = "Delete Failed: ${e.message}"
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun signOut() {
+        repository.signOut()
+    }
 }

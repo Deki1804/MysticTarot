@@ -29,7 +29,7 @@ class CoinRepository(private val context: Context) {
             val bonusReadings = preferences[BONUS_READINGS_KEY] ?: 0
             val today = getCurrentDayInt()
             val canRead = (lastReadingDay != today) || (bonusReadings > 0)
-            android.util.Log.d("CoinRepository", "Check Limit: Last=$lastReadingDay, Today=$today, Bonus=$bonusReadings, CanRead=$canRead")
+            com.mystic.tarot.core.util.LogUtil.d("CoinRepository", "Check Limit: Last=$lastReadingDay, Today=$today, Bonus=$bonusReadings, CanRead=$canRead")
             canRead
         }
 
@@ -69,15 +69,15 @@ class CoinRepository(private val context: Context) {
             if (lastReadingDay != today) {
                 // Consumed Daily Free Reading
                 preferences[LAST_READING_DAY_KEY] = today
-                android.util.Log.d("CoinRepository", "Marked Reading Done (Daily Free used).")
+                com.mystic.tarot.core.util.LogUtil.d("CoinRepository", "Marked Reading Done (Daily Free used).")
             } else {
                 // Consumed Bonus Reading
                 val bonus = preferences[BONUS_READINGS_KEY] ?: 0
                 if (bonus > 0) {
                     preferences[BONUS_READINGS_KEY] = bonus - 1
-                    android.util.Log.d("CoinRepository", "Marked Reading Done (Bonus used). Remaining: ${bonus - 1}")
+                    com.mystic.tarot.core.util.LogUtil.d("CoinRepository", "Marked Reading Done (Bonus used). Remaining: ${bonus - 1}")
                 } else {
-                    android.util.Log.w("CoinRepository", "Marked Reading Done but NO readings available! Logic error?")
+                    com.mystic.tarot.core.util.LogUtil.w("CoinRepository", "Marked Reading Done but NO readings available! Logic error?")
                 }
             }
         }

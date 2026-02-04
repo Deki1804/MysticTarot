@@ -58,6 +58,12 @@ class ShopViewModel(
             }
         }
     }
+
+    fun addBonusReading() {
+        viewModelScope.launch {
+            repository.addBonusReading()
+        }
+    }
     
     fun buyPackage(activity: android.app.Activity, packageToBuy: com.revenuecat.purchases.Package) {
         // billingManager.purchase(

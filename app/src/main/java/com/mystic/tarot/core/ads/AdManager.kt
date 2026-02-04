@@ -2,7 +2,7 @@ package com.mystic.tarot.core.ads
 
 import android.app.Activity
 import android.content.Context
-import android.util.Log
+import com.mystic.tarot.core.util.LogUtil
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -21,7 +21,7 @@ class AdManager(private val context: Context) {
 
     init {
         MobileAds.initialize(context) { initializationStatus ->
-            Log.d(TAG, "AdMob initialized: $initializationStatus")
+            LogUtil.d(TAG, "AdMob initialized: $initializationStatus")
         }
         loadRewardedAd()
     }
@@ -30,42 +30,42 @@ class AdManager(private val context: Context) {
         val adRequest = AdRequest.Builder().build()
         RewardedAd.load(context, AD_UNIT_ID, adRequest, object : RewardedAdLoadCallback() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
-                Log.d(TAG, "Ad failed to load: ${adError.message}")
+                LogUtil.d(TAG, "Ad failed to load: ${adError.message}")
                 rewardedAd = null
             }
 
             override fun onAdLoaded(ad: RewardedAd) {
-                Log.d(TAG, "Ad was loaded.")
+                LogUtil.d(TAG, "Ad was loaded.")
                 rewardedAd = ad
                 
                 rewardedAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                     override fun onAdClicked() {
                         // Called when a click is recorded for an ad.
-                        Log.d(TAG, "Ad was clicked.")
+                        LogUtil.d(TAG, "Ad was clicked.")
                     }
 
                     override fun onAdDismissedFullScreenContent() {
                         // Called when ad is dismissed.
                         // Set the ad reference to null so you don't show the ad a second time.
-                        Log.d(TAG, "Ad dismissed fullscreen content.")
+                        LogUtil.d(TAG, "Ad dismissed fullscreen content.")
                         rewardedAd = null
                         loadRewardedAd() // Pre-load the next one
                     }
 
                     override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                         // Called when ad fails to show.
-                        Log.e(TAG, "Ad failed to show fullscreen content.")
+                        LogUtil.e(TAG, "Ad failed to show fullscreen content.")
                         rewardedAd = null
                     }
 
                     override fun onAdImpression() {
                         // Called when an impression is recorded for an ad.
-                        Log.d(TAG, "Ad recorded an impression.")
+                        LogUtil.d(TAG, "Ad recorded an impression.")
                     }
 
                     override fun onAdShowedFullScreenContent() {
                         // Called when ad is shown.
-                        Log.d(TAG, "Ad showed fullscreen content.")
+                        LogUtil.d(TAG, "Ad showed fullscreen content.")
                     }
                 }
             }
@@ -78,11 +78,11 @@ class AdManager(private val context: Context) {
                 // Handle the reward.
                 val rewardAmount = rewardItem.amount
                 val rewardType = rewardItem.type
-                Log.d(TAG, "User earned the reward: $rewardAmount $rewardType")
+                LogUtil.d(TAG, "User earned the reward: $rewardAmount $rewardType")
                 onUserEarnedReward(rewardAmount)
             }
         } ?: run {
-            Log.d(TAG, "The rewarded ad wasn't ready yet.")
+            LogUtil.d(TAG, "The rewarded ad wasn't ready yet.")
             // Ideally notify user or retry
         }
     }

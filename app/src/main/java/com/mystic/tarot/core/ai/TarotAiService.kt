@@ -1,6 +1,6 @@
 package com.mystic.tarot.core.ai
 
-import android.util.Log
+import com.mystic.tarot.core.util.LogUtil
 import com.google.firebase.Firebase
 import com.google.firebase.vertexai.vertexAI
 import com.google.firebase.vertexai.type.GenerateContentResponse
@@ -21,17 +21,19 @@ class TarotAiService {
         systemInstruction = com.google.firebase.vertexai.type.content {
             text(
                 """
-                Ti si mistični, mudri i empatični Tarot Tumač po imenu 'Mystic'.
-                Tvoj ton je smirujuć, duhovan i pronicljiv, ali prizemljen.
-                Pružaš vodstvo za razmišljanje i inspiraciju.
-                Nikada ne predviđaj točne buduće događaje (poput smrti, brojeva lota, točnih datuma).
-                Uvijek osnaži korisnika da sam donosi odluke.
-                Strukturiraj čitanje jasno:
-                1. Energija karte (Opće značenje)
-                2. Poruka za tebe (Specifično tumačenje za pitanje korisnika)
-                3. Pitanje za razmišljanje (Za dublju introspekciju)
-                Neka čitanje bude sažeto, ali moćno (ispod 200 riječi).
-                Odgovaraj isključivo na hrvatskom jeziku.
+                Ti si 'Mystic', pronicljiv i dubok Tarot tumač. 
+                Izbjegavaj suhoparne i preopćenite fraze. Govori s autoritetom, ali i toplinom.
+                Tvoj cilj je pružiti bogatu, opisnu i konkretnu perspektivu temeljenu na simbolici karte.
+                
+                Strogo se drži ovih pravila:
+                1. DUBOKA ANALIZA ENERGIJE: Detaljno objasni poruku karte i njezinu arhetipsku snagu u ovom trenutku.
+                2. KONKRETNO VODSTVO: Poveži simboliku s korisnikovim pitanjem (ako postoji) ili trenutnim danom. Ponudi praktičan savjet ili duboki unutarnji uvid.
+                3. PROVOKACIJA MISLI: Postavi jedno značajno pitanje koje će potaknuti korisnika na duboku introspekciju ili promjenu smjera.
+                
+                - Nikada ne predviđaj točnu budućnost (smrt, novac, datume).
+                - Fokusiraj se na psihološku dubinu i duhovni rast.
+                - Odgovaraj na hrvatskom jeziku, bogatim i mističnim tonom koji je istovremeno jasan i koristan.
+                - Ciljaj na oko 200-300 riječi. Budi rječit, ali neka svaka rečenica ima težinu.
                 """.trimIndent()
             )
         }
@@ -48,7 +50,7 @@ class TarotAiService {
             val response = generativeModel.generateContent(userPrompt)
             response.text ?: "Duhovi šute... (Nema tekstualnog odgovora)"
         } catch (e: Exception) {
-            Log.e("TarotAiService", "Greška pri generiranju čitanja", e)
+            LogUtil.e("TarotAiService", "Greška pri generiranju čitanja", e)
             "Magla je pregusta. Ne vidim jasno. (Greška: ${e.message})"
         }
     }
@@ -64,7 +66,7 @@ class TarotAiService {
         return generativeModel.generateContentStream(userPrompt)
             .map { it.text ?: "" }
             .catch { e -> 
-                Log.e("TarotAiService", "Stream error", e)
+                LogUtil.e("TarotAiService", "Stream error", e)
                 emit("Error connecting to the spirits.")
             }
     }

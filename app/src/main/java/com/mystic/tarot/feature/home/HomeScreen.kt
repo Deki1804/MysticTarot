@@ -1,8 +1,6 @@
 package com.mystic.tarot.feature.home
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -13,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -23,8 +22,13 @@ import com.mystic.tarot.ui.theme.StarlightGold
 @Composable
 fun HomeScreen(
     navController: NavController,
-    coinRepository: CoinRepository
+    coinRepository: CoinRepository,
+    analyticsHelper: com.mystic.tarot.core.analytics.AnalyticsHelper
 ) {
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        analyticsHelper.logEvent(com.mystic.tarot.core.analytics.AnalyticsHelper.EVENT_APP_OPEN)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -63,14 +67,36 @@ fun HomeScreen(
                 .padding(innerPadding),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                "Dobrodošli u Mystic Tarot",
-                color = StarlightGold,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-            // Ideally we'd have a big "Draw Card" CTA here or summary, 
-            // but for now user navigates via bottom bar.
+            androidx.compose.foundation.layout.Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    "Dobrodošli, tražitelju.",
+                    color = StarlightGold,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    "Udahni duboko. Fokusiraj se na trenutak. Kad budeš spreman, započni svoj dnevni ritual na donjem izborniku.",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 24.sp
+                )
+                
+                Spacer(modifier = Modifier.height(48.dp))
+                
+                // Visual ritual cue
+                Text(
+                    "✨",
+                    fontSize = 48.sp
+                )
+            }
         }
     }
 }

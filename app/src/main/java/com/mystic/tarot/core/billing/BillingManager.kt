@@ -2,6 +2,7 @@ package com.mystic.tarot.core.billing
 
 import android.app.Activity
 import android.content.Context
+import com.mystic.tarot.BuildConfig
 import com.mystic.tarot.core.data.CoinRepository
 import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
@@ -18,7 +19,11 @@ class BillingManager(
     private val apiKey = "goog_PLACEHOLDER_KEY" 
 
     fun initialize() {
-        Purchases.logLevel = com.revenuecat.purchases.LogLevel.DEBUG
+        Purchases.logLevel = if (BuildConfig.DEBUG) {
+            com.revenuecat.purchases.LogLevel.DEBUG
+        } else {
+            com.revenuecat.purchases.LogLevel.WARN
+        }
         Purchases.configure(PurchasesConfiguration.Builder(context, apiKey).build())
     }
 

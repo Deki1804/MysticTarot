@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">MysticTarot</string>
-    <!-- Replace this with your Web Client ID from Firebase Console -> Authentication -> Google -> Web SDK config -->
-    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID_HERE</string>
+    <!-- OBAVEZNO prije productiona: Firebase Console → Authentication → Google → Web SDK config → Web client ID -->
+    <string name="default_web_client_id">704154447662-fbjfhgjv9bmklfenjd16p4q5auc62gbe.apps.googleusercontent.com</string>
+    <!-- URL politike privatnosti (Play Console + link u Postavkama). -->
+    <string name="privacy_policy_url">https://deki1804.github.io/MysticTarot/</string>
 </resources>

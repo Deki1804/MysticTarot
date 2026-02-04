@@ -1,163 +1,303 @@
 package com.mystic.tarot.feature.settings
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mystic.tarot.core.data.SettingsRepository
-import com.mystic.tarot.core.notifications.NotificationHelper
-import com.mystic.tarot.ui.theme.MysticPurple
+import androidx.navigation.NavController
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.mystic.tarot.R
+import com.mystic.tarot.core.auth.AuthViewModel
 import com.mystic.tarot.ui.theme.StarlightGold
-import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    settingsRepository: SettingsRepository,
-    onBackClick: () -> Unit
+    navController: NavController,
+    authViewModel: AuthViewModel
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val notificationsEnabled by settingsRepository.notificationsEnabled.collectAsState(initial = true)
+    val scrollState = rememberScrollState()
+    val user by authViewModel.user.collectAsState()
+    val error by authViewModel.error.collectAsState()
     
-    // Background gradient
-    val brush = Brush.verticalGradient(
-        colors = listOf(Color.Black, MysticPurple, Color.Black)
-    )
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(brush)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        // Header
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBackClick) {
-                Text("⬅", color = StarlightGold, fontSize = 24.sp)
-            }
-            Text(
-                "Postavke & Info",
-                color = StarlightGold,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 8.dp)
-            )
+    // Google Sign In Launcher for Linking
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            authViewModel.onLinkGoogleAccountResult(task)
         }
+    }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Notifications Section
-        Text(
-            "Obavijesti",
-            color = Color.White,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "Dnevni podsjetnik",
-                color = Color.White.copy(alpha = 0.8f)
-            )
-            Switch(
-                checked = notificationsEnabled,
-                onCheckedChange = { enabled ->
-                    scope.launch {
-                        settingsRepository.setNotificationsEnabled(enabled)
-                        if (enabled) {
-                            NotificationHelper.scheduleDailyReminder(context)
-                        } else {
-                            // In a real app we'd cancel the work, but WorkManager needs ID
-                            // For V1, scheduling implies 'enabled'. To strictly cancel we'd need to add cancel logic to Helper.
-                            // Adding logic now:
-                            androidx.work.WorkManager.getInstance(context).cancelUniqueWork("daily_reminder_work")
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Postavke", color = StarlightGold, fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = StarlightGold)
                     }
                 },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = StarlightGold,
-                    checkedTrackColor = MysticPurple,
-                    uncheckedThumbColor = Color.Gray,
-                    uncheckedTrackColor = Color.DarkGray
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF1A1A2E), // Match app theme
+                    titleContentColor = StarlightGold
                 )
             )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-        HorizontalDivider(color = StarlightGold.copy(alpha = 0.3f))
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Legal Section
-        Text(
-            "Pravne Napomene",
-            color = Color.White,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+        },
+        containerColor = Color(0xFF1A1A2E)
+    ) { paddingValues ->
         
-        Text(
-            "Ova aplikacija je isključivo zabavnog karaktera. Tarot čitanja generira umjetna inteligencija (AI) i ne smiju se smatrati stučnim, medicinskim, pravnim ili financijskim savjetima.",
-            color = Color.White.copy(alpha = 0.7f),
-            fontSize = 14.sp,
-            lineHeight = 20.sp
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            "Ne donosite važne životne odluke na temelju ovih čitanja. Za stručnu pomoć obratite se kvalificiranom stručnjaku.",
-            color = Color.White.copy(alpha = 0.7f),
-            fontSize = 14.sp,
-            lineHeight = 20.sp
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Privacy Policy Button
-        Button(
-            onClick = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.freeprivacypolicy.com/live/placeholder")) 
-                // Placeholder URL - User needs to provide real one
-                try {
-                    context.startActivity(intent)
-                } catch (e: Exception) {
-                    // Fallback
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.1f))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Text("Politika Privatnosti (Privacy Policy)", color = StarlightGold)
+            
+            // Error Display
+            if (error != null) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = error ?: "",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+                LaunchedEffect(error) {
+                    kotlinx.coroutines.delay(5000)
+                    authViewModel.clearError()
+                }
+            }
+
+            // SECTION: ACCOUNT
+            SettingsSection(title = "Račun") {
+                if (user?.isAnonymous == true) {
+                    SettingsItem(
+                        icon = Icons.Default.Link,
+                        title = "Poveži Google Račun",
+                        subtitle = "Sačuvaj napredak ako promijeniš uređaj",
+                        onClick = {
+                            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                                .requestIdToken(context.getString(R.string.default_web_client_id))
+                                .requestEmail()
+                                .build()
+                            val googleSignInClient = GoogleSignIn.getClient(context, gso)
+                            launcher.launch(googleSignInClient.signInIntent)
+                        }
+                    )
+                } else {
+                     SettingsItem(
+                        icon = Icons.Default.Email,
+                        title = "Prijavljen kao",
+                        subtitle = user?.email ?: "Google Korisnik",
+                        showChevron = false
+                    )
+                }
+                
+                SettingsItem(
+                    icon = Icons.Default.Logout,
+                    title = "Odjava",
+                    onClick = {
+                        authViewModel.signOut()
+                        navController.navigate("welcome") {
+                            popUpTo(0) // Clear backstack
+                        }
+                    }
+                )
+
+                SettingsItem(
+                    icon = Icons.Default.Delete,
+                    title = "Obriši Račun",
+                    subtitle = "Trajno brisanje svih podataka",
+                    textColor = Color.Red,
+                    iconColor = Color.Red,
+                    onClick = {
+                        // In a real app, show confirmation dialog first
+                         authViewModel.deleteAccount()
+                         navController.navigate("welcome") {
+                            popUpTo(0)
+                        }
+                    }
+                )
+            }
+
+            // SECTION: GENERAL
+            SettingsSection(title = "Općenito") {
+                SettingsItem(
+                    icon = Icons.Default.Language,
+                    title = "Jezik",
+                    subtitle = "Hrvatski (Zadano)",
+                    onClick = { /* Placeholder for language picker */ }
+                )
+                
+                var notificationsEnabled by remember { mutableStateOf(true) }
+                SettingsItem(
+                    icon = Icons.Default.Notifications,
+                    title = "Dnevni Podsjetnik",
+                    trailingContent = {
+                        Switch(
+                            checked = notificationsEnabled,
+                            onCheckedChange = { notificationsEnabled = it },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = StarlightGold,
+                                checkedTrackColor = StarlightGold.copy(alpha = 0.5f)
+                            )
+                        )
+                    },
+                    onClick = { notificationsEnabled = !notificationsEnabled }
+                )
+            }
+
+            // SECTION: SUPPORT
+            SettingsSection(title = "Podrška & Pravila") {
+                SettingsItem(
+                    icon = Icons.Default.Email,
+                    title = "Kontaktiraj Nas",
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_SENDTO).apply {
+                            data = Uri.parse("mailto:larrydj@gmail.com")
+                            putExtra(Intent.EXTRA_SUBJECT, "Mystic Tarot Support")
+                        }
+                        context.startActivity(Intent.createChooser(intent, "Send Email"))
+                    }
+                )
+                
+                SettingsItem(
+                    icon = Icons.Default.Policy,
+                    title = "Pravila Privatnosti",
+                    onClick = {
+                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Deki1804/MysticTarot/blob/main/privacy_policy.md")) // Replace with actual URL
+                         context.startActivity(intent)
+                    }
+                )
+            }
+            
+            // APP INFO
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Mystic Tarot AI v1.0.1",
+                    color = Color.Gray,
+                    fontSize = 12.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsSection(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = title,
+            color = StarlightGold,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+        )
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF2D1658).copy(alpha = 0.5f)),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                content()
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    textColor: Color = Color.White,
+    iconColor: Color = StarlightGold,
+    showChevron: Boolean = true,
+    trailingContent: (@Composable () -> Unit)? = null,
+    onClick: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = iconColor,
+            modifier = Modifier.size(24.dp)
+        )
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                color = textColor,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    color = Color.Gray,
+                    fontSize = 12.sp
+                )
+            }
         }
         
-        Spacer(modifier = Modifier.height(48.dp))
-        
-        Text(
-            "Verzija 1.0.0",
-            color = Color.White.copy(alpha = 0.3f),
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            fontSize = 12.sp
-        )
+        if (trailingContent != null) {
+            trailingContent()
+        } else if (showChevron && onClick != null) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color.Gray
+            )
+        }
     }
 }
